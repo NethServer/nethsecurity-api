@@ -24,3 +24,9 @@ type OTPJson struct {
 type Status2FA struct {
 	Status bool `json:"status" structs:"status"`
 }
+
+type UserLogin struct {
+	Username string `json:"username" structs:"username"`
+	Password string `json:"password" structs:"password"`
+	Timeout  int    `json:"timeout" structs:"timeout"`
+}

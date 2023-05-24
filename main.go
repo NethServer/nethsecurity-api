@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// define static file endpoint
-	router.Use(static.Serve("/", static.LocalFile(configuration.Config.StaticPath, false)))
+	router.Use(static.Serve("/", static.LocalFile(configuration.Config.StaticDir, false)))
 
 	// define api group
 	api := router.Group("/api")
@@ -81,6 +81,9 @@ func main() {
 	{
 		// refresh handler
 		api.GET("/refresh", middleware.InstanceJWT().RefreshHandler)
+
+		// ubus wrapper
+		api.POST("/ubus/call", methods.UBusCallAction)
 
 		// 2FA APIs
 		api.GET("/2FA", methods.Get2FAStatus)

@@ -13,11 +13,13 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -37,7 +39,20 @@ import (
 var ctx = context.Background()
 
 func CheckAuthentication(username string, password string) error {
-	// execute login command
+	// define login object
+	login := models.UserLogin{
+		Username: username,
+		Password: password,
+		Timeout:  1,
+	}
+	jsonLogin, _ := json.Marshal(login)
+
+	// execute login command on ubus
+	_, err := exec.Command("/bin/ubus", "call", "session", "login", string(jsonLogin)).Output()
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
