@@ -34,7 +34,7 @@ type Configuration struct {
 	SecretsDir string `json:"secrets_dir"`
 	TokensDir  string `json:"tokens_dir"`
 
-	StaticPath string `json:"static_path"`
+	StaticDir string `json:"static_dir"`
 }
 
 var Config = Configuration{}
@@ -74,9 +74,9 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if os.Getenv("STATIC_PATH") != "" {
-		Config.StaticPath = os.Getenv("STATIC_PATH")
+	if os.Getenv("STATIC_DIR") != "" {
+		Config.StaticDir = os.Getenv("STATIC_DIR")
 	} else {
-		Config.StaticPath = "/var/run/ns-api-server"
+		Config.StaticDir = "/var/run/ns-api-server"
 	}
 }
