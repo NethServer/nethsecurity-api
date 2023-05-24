@@ -3,6 +3,7 @@ module github.com/NethServer/ns-api-server
 go 1.16
 
 require (
+	github.com/Jeffail/gabs/v2 v2.7.0 // indirect
 	github.com/NethServer/ns8-core/core/api-server v0.0.0-20230511093202-c2f91171c039
 	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
