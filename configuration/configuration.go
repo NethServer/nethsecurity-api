@@ -11,6 +11,7 @@ package configuration
 
 import (
 	"os"
+	"strings"
 
 	"github.com/NethServer/ns-api-server/logs"
 )
@@ -24,6 +25,8 @@ type Configuration struct {
 	TokensDir  string `json:"tokens_dir"`
 
 	StaticDir string `json:"static_dir"`
+
+	SensitiveList []string `json:"sensitive_list"`
 }
 
 var Config = Configuration{}
@@ -67,5 +70,11 @@ func Init() {
 		Config.StaticDir = os.Getenv("STATIC_DIR")
 	} else {
 		Config.StaticDir = "/var/run/ns-api-server"
+	}
+
+	if os.Getenv("SENSITIVE_LIST") != "" {
+		Config.SensitiveList = strings.Split(os.Getenv("SENSITIVE_LIST"), ",")
+	} else {
+		Config.SensitiveList = []string{"password", "secret", "token"}
 	}
 }

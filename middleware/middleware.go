@@ -11,12 +11,15 @@ package middleware
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
+	"github.com/nqd/flat"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 
@@ -140,11 +143,29 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				body, _ := ioutil.ReadAll(tee)
 				c.Request.Body = ioutil.NopCloser(&buf)
 
+				// convert to map and flat it
+				var jsonDyn map[string]interface{}
+				json.Unmarshal(body, &jsonDyn)
+				in, _ := flat.Flatten(jsonDyn, nil)
+
+				// search for sensitve data
+				for k, _ := range in {
+					if strings.Contains(strings.ToLower(k), strings.ToLower("password")) {
+						in[k] = "XXX"
+					}
+				}
+
+				// unflat the map
+				out, _ := flat.Unflatten(in, nil)
+
+				// convert to json string
+				jsonOut, _ := json.Marshal(out)
+
 				// compose string
-				reqBody = " with " + string(body)
+				reqBody = string(jsonOut)
 			}
 
-			logs.Logs.Info("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI + reqBody)
+			logs.Logs.Info("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI + " " + reqBody)
 
 			// authorized
 			return true
