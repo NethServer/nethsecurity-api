@@ -356,7 +356,7 @@ func SetTokenValidation(username string, token string) bool {
 	return true
 }
 
-func RemoveTokenValidation(username string, token string) bool {
+func DelTokenValidation(username string, token string) bool {
 	// read whole file
 	secrestListB, errR := ioutil.ReadFile(configuration.Config.TokensDir + "/" + username)
 	if errR != nil {

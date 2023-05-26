@@ -171,7 +171,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			claims := jwt.ExtractClaimsFromToken(tokenObj)
 
 			// set token to invalid
-			methods.RemoveTokenValidation(claims["id"].(string), tokenObj.Raw)
+			methods.DelTokenValidation(claims["id"].(string), tokenObj.Raw)
 
 			// write logs
 			logs.Logs.Info("[INFO][AUTH] logout response success for user " + claims["id"].(string))
