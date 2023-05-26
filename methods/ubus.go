@@ -41,23 +41,23 @@ func UBusCallAction(c *gin.Context) {
 	// execute login command on ubus
 	out, err := exec.Command("/bin/ubus", "-S", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:])).Output()
 
-	// parse output in a valid JSON
-	jsonParsed, _ := gabs.ParseJSON(out)
-
 	// check errors
 	if err != nil {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
-			Message: "[UBUS] call action failed",
+			Message: "ubus call action failed",
 			Data:    err.Error(),
 		}))
 		return
 	}
 
+	// parse output in a valid JSON
+	jsonParsed, _ := gabs.ParseJSON(out)
+
 	// return 200 OK with data
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
-		Message: "[UBUS] call action success",
+		Message: "ubus call action success",
 		Data:    jsonParsed,
 	}))
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/NethServer/ns-api-server/configuration"
+	"github.com/NethServer/ns-api-server/logs"
 	"github.com/NethServer/ns-api-server/methods"
 	"github.com/NethServer/ns-api-server/middleware"
 	"github.com/NethServer/ns-api-server/response"
@@ -40,6 +41,9 @@ import (
 // @BasePath /api
 
 func main() {
+	// init logs with syslog
+	logs.Init()
+
 	// init configuration
 	configuration.Init()
 
@@ -74,7 +78,7 @@ func main() {
 	api.POST("/logout", middleware.InstanceJWT().LogoutHandler)
 
 	// 2FA APIs
-	api.POST("/2FA/otp-verify", methods.OTPVerify)
+	api.POST("/2fa/otp-verify", methods.OTPVerify)
 
 	// define JWT middleware
 	api.Use(middleware.InstanceJWT().MiddlewareFunc())
@@ -86,9 +90,9 @@ func main() {
 		api.POST("/ubus/call", methods.UBusCallAction)
 
 		// 2FA APIs
-		api.GET("/2FA", methods.Get2FAStatus)
-		api.DELETE("/2FA", methods.Del2FAStatus)
-		api.GET("/2FA/qr-code", methods.QRCode)
+		api.GET("/2fa", methods.Get2FAStatus)
+		api.DELETE("/2fa", methods.Del2FAStatus)
+		api.GET("/2fa/qr-code", methods.QRCode)
 	}
 
 	// handle missing endpoint

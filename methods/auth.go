@@ -28,12 +28,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	jwtl "github.com/golang-jwt/jwt"
-	"github.com/pkg/errors"
 
 	"github.com/NethServer/ns-api-server/configuration"
+	"github.com/NethServer/ns-api-server/logs"
 	"github.com/NethServer/ns-api-server/models"
 	"github.com/NethServer/ns-api-server/response"
-	"github.com/NethServer/ns-api-server/utils"
 )
 
 var ctx = context.Background()
@@ -86,7 +85,7 @@ func OTPVerify(c *gin.Context) {
 	if len(secret) == 0 {
 		c.JSON(http.StatusNotFound, structs.Map(response.StatusNotFound{
 			Code:    404,
-			Message: "User secret not found",
+			Message: "user secret not found",
 			Data:    "",
 		}))
 		return
@@ -127,7 +126,7 @@ func OTPVerify(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 				Code:    400,
-				Message: "Clean previous tokens error",
+				Message: "clean previous tokens error",
 				Data:    err,
 			}))
 			return
@@ -138,7 +137,7 @@ func OTPVerify(c *gin.Context) {
 	if !SetTokenValidation(jsonOTP.Username, jsonOTP.Token) {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
-			Message: "Token validation set error",
+			Message: "token validation set error",
 			Data:    "",
 		}))
 		return
@@ -155,7 +154,7 @@ func OTPVerify(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
-			Message: "Status set error",
+			Message: "status set error",
 			Data:    err,
 		}))
 		return
@@ -174,7 +173,7 @@ func QRCode(c *gin.Context) {
 	secret := make([]byte, 20)
 	_, err := rand.Read(secret)
 	if err != nil {
-		utils.LogError(errors.Wrap(err, "[2FA] Failed to generate random secret for QRCode"))
+		logs.Logs.Err("[ERR][2FA] Failed to generate random secret for QRCode: " + err.Error())
 	}
 
 	// convert to string
@@ -192,7 +191,7 @@ func QRCode(c *gin.Context) {
 	if !result {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
-			Message: "User secret set error",
+			Message: "user secret set error",
 			Data:    "",
 		}))
 		return
@@ -201,7 +200,7 @@ func QRCode(c *gin.Context) {
 	// define URL
 	URL, err := url.Parse("otpauth://totp")
 	if err != nil {
-		utils.LogError(errors.Wrap(err, "[2FA] Failed to parse URL for QRCode"))
+		logs.Logs.Err("[ERR][2FA] Failed to parse URL for QRCode: " + err.Error())
 	}
 
 	// add params
@@ -256,7 +255,7 @@ func Del2FAStatus(c *gin.Context) {
 	if errRevocate != nil {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    403,
-			Message: "Error in revocate 2FA for user",
+			Message: "error in revocate 2FA for user",
 			Data:    nil,
 		}))
 		return
@@ -398,7 +397,7 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 		})
 
 		if err != nil {
-			utils.LogError(errors.Wrap(err, "[JWT] error in JWT token validation"))
+			logs.Logs.Err("[ERR][JWT] error in JWT token validation: " + err.Error())
 			return false
 		}
 
@@ -408,14 +407,14 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 					username := claims["id"].(string)
 
 					if !CheckTokenValidation(username, tokenString) {
-						utils.LogError(errors.New("[JWT] error JWT token not found"))
+						logs.Logs.Err("[ERR][JWT] error JWT token not found: " + err.Error())
 						return false
 					}
 				}
 				return true
 			}
 		} else {
-			utils.LogError(errors.Wrap(err, "[JWT] error in JWT token claims"))
+			logs.Logs.Err("[ERR][JWT] error in JWT token claims: " + err.Error())
 			return false
 		}
 	}

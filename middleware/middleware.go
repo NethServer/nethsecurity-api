@@ -10,9 +10,10 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
+	"io/ioutil"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
@@ -20,10 +21,10 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 
 	"github.com/NethServer/ns-api-server/configuration"
+	"github.com/NethServer/ns-api-server/logs"
 	"github.com/NethServer/ns-api-server/methods"
 	"github.com/NethServer/ns-api-server/models"
 	"github.com/NethServer/ns-api-server/response"
-	"github.com/NethServer/ns-api-server/utils"
 )
 
 type login struct {
@@ -64,15 +65,15 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// check login
 			err := methods.CheckAuthentication(username, password)
 			if err != nil {
-				utils.LogError(errors.Wrap(err, "[AUTH] authentication failed for user "+username))
-
-				// store login fail action TODO
+				// login fail action
+				logs.Logs.Info("[INFO][AUTH] authentication failed for user " + username + ": " + err.Error())
 
 				// return JWT error
 				return nil, jwt.ErrFailedAuthentication
 			}
 
-			// store audit login ok action TODO
+			// login ok action
+			logs.Logs.Info("[INFO][AUTH] authentication success for user " + username)
 
 			// return user auth model
 			return &models.UserAuthorizations{
@@ -117,13 +118,33 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			claims, _ := InstanceJWT().GetClaimsFromJWT(c)
 			token, _ := InstanceJWT().ParseToken(c)
 
+			// log request and body
+			reqMethod := c.Request.Method
+			reqURI := c.Request.RequestURI
+
 			// check if token exists
 			if !methods.CheckTokenValidation(claims["id"].(string), token.Raw) {
+				// write logs
+				logs.Logs.Info("[INFO][AUTH] authorization failed for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI)
+
 				// not authorized
 				return false
 			}
 
-			// store audit authorization action TODO
+			// extract body
+			reqBody := ""
+			if reqMethod == "POST" || reqMethod == "PUT" {
+				// extract body
+				var buf bytes.Buffer
+				tee := io.TeeReader(c.Request.Body, &buf)
+				body, _ := ioutil.ReadAll(tee)
+				c.Request.Body = ioutil.NopCloser(&buf)
+
+				// compose string
+				reqBody = " with " + string(body)
+			}
+
+			logs.Logs.Info("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI + reqBody)
 
 			// authorized
 			return true
@@ -138,6 +159,9 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				methods.SetTokenValidation(claims["id"].(string), token)
 			}
 
+			// write logs
+			logs.Logs.Info("[INFO][AUTH] login response success for user " + claims["id"].(string))
+
 			// return 200 OK
 			c.JSON(200, gin.H{"code": 200, "expire": t, "token": token})
 		},
@@ -149,10 +173,16 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// set token to invalid
 			methods.RemoveTokenValidation(claims["id"].(string), tokenObj.Raw)
 
+			// write logs
+			logs.Logs.Info("[INFO][AUTH] logout response success for user " + claims["id"].(string))
+
 			// reutrn 200 OK
 			c.JSON(200, gin.H{"code": 200})
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
+			// write logs
+			logs.Logs.Info("[INFO][AUTH] unauthorized request: " + message)
+
 			// response not authorized
 			c.JSON(code, structs.Map(response.StatusUnauthorized{
 				Code:    code,
@@ -168,7 +198,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 
 	// check middleware errors
 	if errDefine != nil {
-		utils.LogError(errors.Wrap(errDefine, "[AUTH] middleware definition error"))
+		logs.Logs.Err("[ERR][AUTH] middleware definition error: " + errDefine.Error())
 	}
 
 	// init middleware
@@ -176,7 +206,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 
 	// check error on initialization
 	if errInit != nil {
-		utils.LogError(errors.Wrap(errInit, "[AUTH] middleware initialization error"))
+		logs.Logs.Err("[ERR][AUTH] middleware initialization error: " + errInit.Error())
 	}
 
 	// return object

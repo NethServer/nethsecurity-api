@@ -10,14 +10,9 @@
 package utils
 
 import (
-	"os"
 	"strconv"
 	"time"
 )
-
-func LogError(err error) {
-	os.Stderr.WriteString(err.Error() + "\n")
-}
 
 func Contains(a string, values []string) bool {
 	for _, b := range values {
