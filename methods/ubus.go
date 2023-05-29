@@ -54,6 +54,17 @@ func UBusCallAction(c *gin.Context) {
 	// parse output in a valid JSON
 	jsonParsed, _ := gabs.ParseJSON(out)
 
+	// check errors in response
+	errorMessage, errFound := jsonParsed.Path("error").Data().(string)
+	if errFound {
+		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+			Code:    400,
+			Message: "ubus call action failed",
+			Data:    "payload: " + errorMessage,
+		}))
+		return
+	}
+
 	// return 200 OK with data
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
