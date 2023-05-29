@@ -148,10 +148,12 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				json.Unmarshal(body, &jsonDyn)
 				in, _ := flat.Flatten(jsonDyn, nil)
 
-				// search for sensitve data
+				// search for sensitve data, in sensitive list
 				for k, _ := range in {
-					if strings.Contains(strings.ToLower(k), strings.ToLower("password")) {
-						in[k] = "XXX"
+					for _, s := range configuration.Config.SensitiveList {
+						if strings.Contains(strings.ToLower(k), strings.ToLower(s)) {
+							in[k] = "XXX"
+						}
 					}
 				}
 
