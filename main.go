@@ -26,9 +26,9 @@ import (
 	"github.com/NethServer/ns-api-server/response"
 )
 
-// @title Nextsecurity Controller API Server
+// @title NethSecurity Controller API Server
 // @version 1.0
-// @description Nextsecurity Controller API Server is used to create tasks across the nodes
+// @description NethSecurity Controller API Server is used to create tasks across the nodes
 // @termsOfService https://nethserver.org/terms/
 
 // @contact.name NethServer Developer Team

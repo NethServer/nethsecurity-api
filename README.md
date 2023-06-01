@@ -1,4 +1,4 @@
-# ns-api-server
+# nethsecurity-api
 
 ## Build
 ```bash
