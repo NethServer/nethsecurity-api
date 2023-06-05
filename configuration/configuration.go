@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/NethServer/ns-api-server/logs"
+	"github.com/NethServer/nethsecurity-api/logs"
 )
 
 type Configuration struct {
@@ -69,7 +69,7 @@ func Init() {
 	if os.Getenv("STATIC_DIR") != "" {
 		Config.StaticDir = os.Getenv("STATIC_DIR")
 	} else {
-		Config.StaticDir = "/var/run/ns-api-server"
+		Config.StaticDir = "/var/run/nethsecurity-api"
 	}
 
 	if os.Getenv("SENSITIVE_LIST") != "" {

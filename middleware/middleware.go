@@ -23,11 +23,11 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 
-	"github.com/NethServer/ns-api-server/configuration"
-	"github.com/NethServer/ns-api-server/logs"
-	"github.com/NethServer/ns-api-server/methods"
-	"github.com/NethServer/ns-api-server/models"
-	"github.com/NethServer/ns-api-server/response"
+	"github.com/NethServer/nethsecurity-api/configuration"
+	"github.com/NethServer/nethsecurity-api/logs"
+	"github.com/NethServer/nethsecurity-api/methods"
+	"github.com/NethServer/nethsecurity-api/models"
+	"github.com/NethServer/nethsecurity-api/response"
 )
 
 type login struct {

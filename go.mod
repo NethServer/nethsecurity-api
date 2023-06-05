@@ -1,4 +1,4 @@
-module github.com/NethServer/ns-api-server
+module github.com/NethServer/nethsecurity-api
 
 go 1.16
 

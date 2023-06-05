@@ -19,11 +19,11 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 
-	"github.com/NethServer/ns-api-server/configuration"
-	"github.com/NethServer/ns-api-server/logs"
-	"github.com/NethServer/ns-api-server/methods"
-	"github.com/NethServer/ns-api-server/middleware"
-	"github.com/NethServer/ns-api-server/response"
+	"github.com/NethServer/nethsecurity-api/configuration"
+	"github.com/NethServer/nethsecurity-api/logs"
+	"github.com/NethServer/nethsecurity-api/methods"
+	"github.com/NethServer/nethsecurity-api/middleware"
+	"github.com/NethServer/nethsecurity-api/response"
 )
 
 // @title NethSecurity Controller API Server

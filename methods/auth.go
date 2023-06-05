@@ -29,10 +29,10 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	jwtl "github.com/golang-jwt/jwt"
 
-	"github.com/NethServer/ns-api-server/configuration"
-	"github.com/NethServer/ns-api-server/logs"
-	"github.com/NethServer/ns-api-server/models"
-	"github.com/NethServer/ns-api-server/response"
+	"github.com/NethServer/nethsecurity-api/configuration"
+	"github.com/NethServer/nethsecurity-api/logs"
+	"github.com/NethServer/nethsecurity-api/models"
+	"github.com/NethServer/nethsecurity-api/response"
 )
 
 var ctx = context.Background()

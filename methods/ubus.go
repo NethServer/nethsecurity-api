@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"os/exec"
 
-	"github.com/NethServer/ns-api-server/models"
-	"github.com/NethServer/ns-api-server/response"
+	"github.com/NethServer/nethsecurity-api/models"
+	"github.com/NethServer/nethsecurity-api/response"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/fatih/structs"

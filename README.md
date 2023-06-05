@@ -7,7 +7,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
 
 ## Run
 ```bash
-SECRET_JWT="<secret>" SECRETS_DIR="<secrets_dir>" TOKENS_DIR="<tokens_dir>" ./ns-api-server
+SECRET_JWT="<secret>" SECRETS_DIR="<secrets_dir>" TOKENS_DIR="<tokens_dir>" ./nethsecurity-api
 ```
 
 Where:
