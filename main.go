@@ -26,9 +26,9 @@ import (
 	"github.com/NethServer/nethsecurity-api/response"
 )
 
-// @title NethSecurity Controller API Server
+// @title NethSecurity StandAlone API Server
 // @version 1.0
-// @description NethSecurity Controller API Server is used to create tasks across the nodes
+// @description NethSecurity StandAlone API Server is used to create manage stand-alone NethSecurity instance
 // @termsOfService https://nethserver.org/terms/
 
 // @contact.name NethServer Developer Team
@@ -42,7 +42,7 @@ import (
 
 func main() {
 	// init logs with syslog
-	logs.Init()
+	logs.Init("nethsecurity_api")
 
 	// init configuration
 	configuration.Init()

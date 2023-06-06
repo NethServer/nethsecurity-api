@@ -128,7 +128,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// check if token exists
 			if !methods.CheckTokenValidation(claims["id"].(string), token.Raw) {
 				// write logs
-				logs.Logs.Info("[INFO][AUTH] authorization failed for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI)
+				logs.Logs.Info("[INFO][AUTH] authorization failed for user " + claims["id"].(string) + ". " + reqMethod + " " + reqURI)
 
 				// not authorized
 				return false
@@ -167,7 +167,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				reqBody = string(jsonOut)
 			}
 
-			logs.Logs.Info("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". request " + reqMethod + " on " + reqURI + " " + reqBody)
+			logs.Logs.Info("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". " + reqMethod + " " + reqURI + " " + reqBody)
 
 			// authorized
 			return true

@@ -15,9 +15,9 @@ import (
 
 var Logs *syslog.Writer
 
-func Init() {
+func Init(name string) {
 	// init syslog writer
-	sysLog, err := syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, "ns_api_server")
+	sysLog, err := syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, name)
 
 	// check error on init
 	if err != nil {
