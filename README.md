@@ -17,7 +17,7 @@ Where:
 
 ## APIs
 ### Auth
-- `POST /login`
+- `POST /api/login`
 
     REQ
     ```json
@@ -40,7 +40,7 @@ Where:
        "token": "eyJh...E-f0"
      }
     ```
-- `POST /logout`
+- `POST /api/logout`
 
     REQ
     ```json
@@ -57,7 +57,7 @@ Where:
        "code": 200
      }
     ```
-- `GET /refresh`
+- `GET /api/refresh`
 
     REQ
     ```json
@@ -78,7 +78,7 @@ Where:
     ```
 
 ### 2FA
-- `POST /2fa/otp-verify`
+- `POST /api/2fa/otp-verify`
 
     REQ
     ```json
@@ -104,7 +104,7 @@ Where:
      }
     ```
 
-- `GET /2fa`
+- `GET /api/2fa`
 
     REQ
     ```json
@@ -123,7 +123,7 @@ Where:
        "message": "2FA not set for this user"
      }
     ```
-- `DELETE /2fa`
+- `DELETE /api/2fa`
 
     REQ
     ```json
@@ -142,7 +142,7 @@ Where:
        "message": "2FA revocate successfully"
      }
     ```
-- `GET /2fa/qr-code`
+- `GET /api/2fa/qr-code`
 
     REQ
     ```json
@@ -166,7 +166,7 @@ Where:
     ```
 
 ### ubus
-- `POST /ubus/call`
+- `POST /api/ubus/call`
 
    REQ
     ```json
