@@ -10,20 +10,16 @@
 package logs
 
 import (
-	"log/syslog"
+	"log"
+	"os"
 )
 
-var Logs *syslog.Writer
+var Logs *log.Logger
 
 func Init(name string) {
 	// init syslog writer
-	sysLog, err := syslog.New(syslog.LOG_WARNING|syslog.LOG_DAEMON, name)
-
-	// check error on init
-	if err != nil {
-		sysLog.Crit("[CRITICAL][LOGS] Failed to init syslog logs: " + err.Error())
-	}
+	logger := log.New(os.Stderr, name, log.Ldate|log.Ltime|log.Lshortfile)
 
 	// assign writer to Logs var
-	Logs = sysLog
+	Logs = logger
 }

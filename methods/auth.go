@@ -173,7 +173,7 @@ func QRCode(c *gin.Context) {
 	secret := make([]byte, 20)
 	_, err := rand.Read(secret)
 	if err != nil {
-		logs.Logs.Err("[ERR][2FA] Failed to generate random secret for QRCode: " + err.Error())
+		logs.Logs.Println("[ERR][2FA] Failed to generate random secret for QRCode: " + err.Error())
 	}
 
 	// convert to string
@@ -200,7 +200,7 @@ func QRCode(c *gin.Context) {
 	// define URL
 	URL, err := url.Parse("otpauth://totp")
 	if err != nil {
-		logs.Logs.Err("[ERR][2FA] Failed to parse URL for QRCode: " + err.Error())
+		logs.Logs.Println("[ERR][2FA] Failed to parse URL for QRCode: " + err.Error())
 	}
 
 	// add params
@@ -397,7 +397,7 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 		})
 
 		if err != nil {
-			logs.Logs.Err("[ERR][JWT] error in JWT token validation: " + err.Error())
+			logs.Logs.Println("[ERR][JWT] error in JWT token validation: " + err.Error())
 			return false
 		}
 
@@ -407,14 +407,14 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 					username := claims["id"].(string)
 
 					if !CheckTokenValidation(username, tokenString) {
-						logs.Logs.Err("[ERR][JWT] error JWT token not found: " + err.Error())
+						logs.Logs.Println("[ERR][JWT] error JWT token not found: " + err.Error())
 						return false
 					}
 				}
 				return true
 			}
 		} else {
-			logs.Logs.Err("[ERR][JWT] error in JWT token claims: " + err.Error())
+			logs.Logs.Println("[ERR][JWT] error in JWT token claims: " + err.Error())
 			return false
 		}
 	}
