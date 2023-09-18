@@ -43,8 +43,8 @@ func UBusCallAction(c *gin.Context) {
 
 	// check errors
 	if err != nil {
-		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
-			Code:    400,
+		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
+			Code:    500,
 			Message: "ubus call action failed",
 			Data:    err.Error(),
 		}))
@@ -57,10 +57,10 @@ func UBusCallAction(c *gin.Context) {
 	// check errors in response
 	errorMessage, errFound := jsonParsed.Path("error").Data().(string)
 	if errFound {
-		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
-			Code:    400,
-			Message: "ubus call action failed",
-			Data:    "payload: " + errorMessage,
+		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
+			Code:    500,
+			Message: errorMessage,
+			Data: jsonParsed,
 		}))
 		return
 	}
