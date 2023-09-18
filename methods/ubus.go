@@ -65,6 +65,17 @@ func UBusCallAction(c *gin.Context) {
 		return
 	}
 
+	// check validation error in response
+	validationFound := jsonParsed.Exists("validation")
+	if validationFound {
+		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+			Code:    400,
+			Message: "validation_failed",
+			Data: jsonParsed,
+		}))
+		return
+	}
+
 	// return 200 OK with data
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
