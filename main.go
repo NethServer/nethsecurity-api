@@ -93,6 +93,9 @@ func main() {
 		api.GET("/2fa", methods.Get2FAStatus)
 		api.DELETE("/2fa", methods.Del2FAStatus)
 		api.GET("/2fa/qr-code", methods.QRCode)
+
+		// upload
+		api.POST("/upload", methods.Upload)
 	}
 
 	// handle missing endpoint

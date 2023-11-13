@@ -13,6 +13,7 @@ require (
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.9.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.2.0
 	github.com/nqd/flat v0.2.0
 	github.com/pkg/errors v0.9.1
 )

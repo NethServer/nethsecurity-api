@@ -11,6 +11,7 @@ package configuration
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/NethServer/nethsecurity-api/logs"
@@ -27,6 +28,9 @@ type Configuration struct {
 	StaticDir string `json:"static_dir"`
 
 	SensitiveList []string `json:"sensitive_list"`
+
+	UploadFileMaxSize int64  `json:"upload_file_max_size"`
+	UploadFilePath    string `json:"upload_file_path"`
 }
 
 var Config = Configuration{}
@@ -69,12 +73,24 @@ func Init() {
 	if os.Getenv("STATIC_DIR") != "" {
 		Config.StaticDir = os.Getenv("STATIC_DIR")
 	} else {
-		Config.StaticDir = "/var/run/nethsecurity-api"
+		Config.StaticDir = "/var/run/ns-api-server"
 	}
 
 	if os.Getenv("SENSITIVE_LIST") != "" {
 		Config.SensitiveList = strings.Split(os.Getenv("SENSITIVE_LIST"), ",")
 	} else {
 		Config.SensitiveList = []string{"password", "secret", "token"}
+	}
+
+	if os.Getenv("UPLOAD_FILE_PATH") != "" {
+		Config.UploadFilePath = os.Getenv("UPLOAD_FILE_PATH")
+	} else {
+		Config.UploadFilePath = "/var/run/ns-api-server/uploads"
+	}
+
+	if os.Getenv("UPLOAD_FILE_MAX_SIZE") != "" {
+		Config.UploadFileMaxSize, _ = strconv.ParseInt(os.Getenv("UPLOAD_FILE_MAX_SIZE"), 10, 64)
+	} else {
+		Config.UploadFileMaxSize = 32
 	}
 }
