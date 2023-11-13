@@ -73,7 +73,7 @@ func Init() {
 	if os.Getenv("STATIC_DIR") != "" {
 		Config.StaticDir = os.Getenv("STATIC_DIR")
 	} else {
-		Config.StaticDir = "/var/run/nethsecurity-api"
+		Config.StaticDir = "/var/run/ns-api-server"
 	}
 
 	if os.Getenv("SENSITIVE_LIST") != "" {
@@ -85,7 +85,7 @@ func Init() {
 	if os.Getenv("UPLOAD_FILE_PATH") != "" {
 		Config.UploadFilePath = os.Getenv("UPLOAD_FILE_PATH")
 	} else {
-		Config.UploadFilePath = "/var/run/nethsecurity-api/uploads"
+		Config.UploadFilePath = "/var/run/ns-api-server/uploads"
 	}
 
 	if os.Getenv("UPLOAD_FILE_MAX_SIZE") != "" {
