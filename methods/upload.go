@@ -12,7 +12,6 @@ package methods
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/NethServer/nethsecurity-api/configuration"
 	"github.com/NethServer/nethsecurity-api/response"
@@ -44,11 +43,8 @@ func Upload(c *gin.Context) {
 	// create directory if not exists
 	_ = os.MkdirAll(configuration.Config.UploadFilePath, os.ModePerm)
 
-	// get filename
-	filename := filepath.Base(file.Filename)
-
 	// set name with uuid to avoid overrides
-	name := filename + "-" + uuid.New().String()
+	name := "upload-" + uuid.New().String()
 
 	// upload the file to specific directory and check error
 	if err := c.SaveUploadedFile(file, configuration.Config.UploadFilePath+"/"+name); err != nil {
