@@ -268,7 +268,7 @@ func Get2FAStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
 		Message: message,
-		Data:    gin.H{"status": statusS == "1", "codes": recoveryCodes},
+		Data:    gin.H{"status": statusS == "1", "recovery_codes": recoveryCodes},
 	}))
 }
 
