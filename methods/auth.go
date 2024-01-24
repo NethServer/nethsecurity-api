@@ -114,6 +114,20 @@ func OTPVerify(c *gin.Context) {
 			}))
 			return
 		}
+
+		// remove used recovery OTP
+		recoveryCodes = utils.Remove(jsonOTP.OTP, recoveryCodes)
+
+		// update recovery codes file
+		if !UpdateRecoveryCodes(jsonOTP.Username, recoveryCodes) {
+			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+				Code:    400,
+				Message: "OTP recovery codes not updated",
+				Data:    "",
+			}))
+			return
+		}
+
 	}
 
 	// check if 2FA was disabled
@@ -240,13 +254,17 @@ func Get2FAStatus(c *gin.Context) {
 
 	// handle response
 	var message = "2FA set for this user"
+	var recoveryCodes []string
+
 	if !(statusS == "1") || err != nil {
 		message = "2FA not set for this user"
 		statusS = "0"
 	}
 
 	// get recovery codes
-	recoveryCodes := GetRecoveryCodes(claims["id"].(string))
+	if statusS == "1" {
+		recoveryCodes = GetRecoveryCodes(claims["id"].(string))
+	}
 
 	// return response
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
@@ -435,25 +453,61 @@ func GetRecoveryCodes(username string) []string {
 	// create empty array
 	var recoveryCodes []string
 
-	// get secret
-	secret := GetUserSecret(username)
+	// check if recovery codes exists
+	codesB, _ := os.ReadFile(configuration.Config.SecretsDir + "/" + username + "/codes")
 
-	// get recovery codes
-	if len(string(secret)) > 0 {
-		// execute oathtool to get recovery codes
-		out, err := exec.Command("/usr/bin/oathtool", "-w", "4", "-b", secret).Output()
+	// check length
+	if len(string(codesB[:])) == 0 {
 
-		// check errors
-		if err != nil {
-			return recoveryCodes
+		// get secret
+		secret := GetUserSecret(username)
+
+		// get recovery codes
+		if len(string(secret)) > 0 {
+			// execute oathtool to get recovery codes
+			out, err := exec.Command("/usr/bin/oathtool", "-w", "4", "-b", secret).Output()
+
+			// check errors
+			if err != nil {
+				return recoveryCodes
+			}
+
+			// open file
+			f, _ := os.OpenFile(configuration.Config.SecretsDir+"/"+username+"/codes", os.O_WRONLY|os.O_CREATE, 0600)
+			defer f.Close()
+
+			// write file with secret
+			_, _ = f.WriteString(string(out[:]))
+
+			// assign binary output
+			codesB = out
 		}
 
-		// parse output
-		recoveryCodes = strings.Split(string(out[:]), "\n")
-
-		// remove empty result, the last one
-		recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
 	}
 
+	// parse output
+	recoveryCodes = strings.Split(string(codesB[:]), "\n")
+
+	// remove empty result, the last one
+	recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
+
+	// return codes
 	return recoveryCodes
+}
+
+func UpdateRecoveryCodes(username string, codes []string) bool {
+	// open file
+	f, _ := os.OpenFile(configuration.Config.SecretsDir+"/"+username+"/codes", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	defer f.Close()
+
+	// write file with secret
+	codes = append(codes, "")
+	_, err := f.WriteString(strings.Join(codes[:], "\n"))
+
+	// check error
+	if err != nil {
+		return false
+	}
+
+	return true
 }

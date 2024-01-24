@@ -23,6 +23,15 @@ func Contains(a string, values []string) bool {
 	return false
 }
 
+func Remove(a string, values []string) []string {
+	for i, v := range values {
+		if v == a {
+			return append(values[:i], values[i+1:]...)
+		}
+	}
+	return values
+}
+
 func EpochToHumanDate(epochTime int) string {
 	i, err := strconv.ParseInt(strconv.Itoa(epochTime), 10, 64)
 	if err != nil {
