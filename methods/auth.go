@@ -22,6 +22,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/Jeffail/gabs/v2"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/dgryski/dgoogauth"
 	"github.com/fatih/structs"
@@ -107,10 +108,24 @@ func OTPVerify(c *gin.Context) {
 		recoveryCodes := GetRecoveryCodes(jsonOTP.Username)
 
 		if !utils.Contains(jsonOTP.OTP, recoveryCodes) {
+			// compose validation error
+			jsonParsed, _ := gabs.ParseJSON([]byte(`{
+				"validation": {
+				  "errors": [
+					{
+					  "message": "invalid_otp",
+					  "parameter": "otp",
+					  "value": ""
+					}
+				  ]
+				}
+			}`))
+
+			// return validation error
 			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 				Code:    400,
-				Message: "OTP token invalid",
-				Data:    "",
+				Message: "validation_failed",
+				Data:    jsonParsed,
 			}))
 			return
 		}
