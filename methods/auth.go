@@ -33,6 +33,7 @@ import (
 	"github.com/NethServer/nethsecurity-api/logs"
 	"github.com/NethServer/nethsecurity-api/models"
 	"github.com/NethServer/nethsecurity-api/response"
+	"github.com/NethServer/nethsecurity-api/utils"
 )
 
 var ctx = context.Background()
@@ -101,12 +102,18 @@ func OTPVerify(c *gin.Context) {
 	// verifiy OTP
 	result, err := otpc.Authenticate(jsonOTP.OTP)
 	if err != nil || !result {
-		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
-			Code:    400,
-			Message: "OTP token invalid",
-			Data:    "",
-		}))
-		return
+
+		// check if OTP is a recovery code
+		recoveryCodes := GetRecoveryCodes(jsonOTP.Username)
+
+		if !utils.Contains(jsonOTP.OTP, recoveryCodes) {
+			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+				Code:    400,
+				Message: "OTP token invalid",
+				Data:    "",
+			}))
+			return
+		}
 	}
 
 	// check if 2FA was disabled
@@ -238,31 +245,8 @@ func Get2FAStatus(c *gin.Context) {
 		statusS = "0"
 	}
 
-	// get secret
-	secretB, _ := os.ReadFile(configuration.Config.SecretsDir + "/" + claims["id"].(string) + "/secret")
-
 	// get recovery codes
-	var recoveryCodes []string
-	if len(string(secretB[:])) > 0 {
-		// execute oathtool to get recovery codes
-		out, err := exec.Command("/usr/bin/oathtool", "-w", "4", "-b", string(secretB[:])).Output()
-
-		// check errors
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
-				Code:    500,
-				Message: "oathtool execution failed",
-				Data:    err.Error(),
-			}))
-			return
-		}
-
-		// parse output
-		recoveryCodes = strings.Split(string(out[:]), "\n")
-
-		// remove empty result, the last one
-		recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
-	}
+	recoveryCodes := GetRecoveryCodes(claims["id"].(string))
 
 	// return response
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
@@ -445,4 +429,31 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 		}
 	}
 	return false
+}
+
+func GetRecoveryCodes(username string) []string {
+	// create empty array
+	var recoveryCodes []string
+
+	// get secret
+	secret := GetUserSecret(username)
+
+	// get recovery codes
+	if len(string(secret)) > 0 {
+		// execute oathtool to get recovery codes
+		out, err := exec.Command("/usr/bin/oathtool", "-w", "4", "-b", secret).Output()
+
+		// check errors
+		if err != nil {
+			return recoveryCodes
+		}
+
+		// parse output
+		recoveryCodes = strings.Split(string(out[:]), "\n")
+
+		// remove empty result, the last one
+		recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
+	}
+
+	return recoveryCodes
 }
