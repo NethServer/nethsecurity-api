@@ -238,11 +238,37 @@ func Get2FAStatus(c *gin.Context) {
 		statusS = "0"
 	}
 
+	// get secret
+	secretB, _ := os.ReadFile(configuration.Config.SecretsDir + "/" + claims["id"].(string) + "/secret")
+
+	// get recovery codes
+	var recoveryCodes []string
+	if len(string(secretB[:])) > 0 {
+		// execute oathtool to get recovery codes
+		out, err := exec.Command("/usr/bin/oathtool", "-w", "4", "-b", string(secretB[:])).Output()
+
+		// check errors
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
+				Code:    500,
+				Message: "oathtool execution failed",
+				Data:    err.Error(),
+			}))
+			return
+		}
+
+		// parse output
+		recoveryCodes = strings.Split(string(out[:]), "\n")
+
+		// remove empty result, the last one
+		recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
+	}
+
 	// return response
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
 		Message: message,
-		Data:    statusS == "1",
+		Data:    gin.H{"status": statusS == "1", "codes": recoveryCodes},
 	}))
 }
 
