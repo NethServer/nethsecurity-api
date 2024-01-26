@@ -193,10 +193,8 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			tokenObj, _ := InstanceJWT().ParseTokenString(token)
 			claims := jwt.ExtractClaimsFromToken(tokenObj)
 
-			// set token to valid, if not 2FA
-			if !claims["2fa"].(bool) {
-				methods.SetTokenValidation(claims["id"].(string), token)
-			}
+			// set token to valid
+			methods.SetTokenValidation(claims["id"].(string), token)
 
 			// write logs
 			logs.Logs.Println("[INFO][AUTH] refresh response success for user " + claims["id"].(string))
