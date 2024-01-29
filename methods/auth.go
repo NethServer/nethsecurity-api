@@ -390,7 +390,7 @@ func CheckTokenValidation(username string, token string) bool {
 	}
 	secrestList := string(secrestListB)
 
-	// //check whether s contains substring text
+	// check whether s contains substring text
 	return strings.Contains(secrestList, token)
 }
 
@@ -514,8 +514,10 @@ func GetRecoveryCodes(username string) []string {
 	// parse output
 	recoveryCodes = strings.Split(string(codesB[:]), "\n")
 
-	// remove empty result, the last one
-	recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
+	// remove empty element, the last one
+	if recoveryCodes[len(recoveryCodes)-1] == "" {
+		recoveryCodes = recoveryCodes[:len(recoveryCodes)-1]
+	}
 
 	// return codes
 	return recoveryCodes
@@ -536,4 +538,67 @@ func UpdateRecoveryCodes(username string, codes []string) bool {
 	}
 
 	return true
+}
+
+func DeleteExpiredTokens() {
+	// create new tokens list
+	var validTokens []string
+
+	// read tokens directory
+	usernames, err := ioutil.ReadDir(configuration.Config.TokensDir)
+
+	// check read error
+	if err != nil {
+		logs.Logs.Println("[ERR][JWT] Failed to read tokens dir " + configuration.Config.TokensDir + ". Error: " + err.Error())
+	}
+
+	// list usernames
+	for _, username := range usernames {
+		// read whole file
+		tokenstListB, err := ioutil.ReadFile(configuration.Config.TokensDir + "/" + username.Name())
+
+		// check error
+		if err != nil {
+			logs.Logs.Println("[ERR][JWT] Failed to read tokens file " + configuration.Config.TokensDir + "/" + username.Name() + ". Error: " + err.Error())
+		}
+
+		// get string file
+		tokensList := string(tokenstListB)
+
+		// convert in array
+		tokens := strings.Split(tokensList, "\n")
+
+		// remove empty elem
+		if tokens[len(tokens)-1] == "" {
+			tokens = tokens[:len(tokens)-1]
+		}
+
+		// loop all tokens
+		for _, token := range tokens {
+			// validate token
+			valid := ValidateAuth(token, false)
+
+			// add only valid tokens
+			if valid {
+				token = strings.TrimSpace(token)
+				validTokens = append(validTokens, token)
+			}
+		}
+
+		// rewrite file with only valid tokens
+		f, _ := os.OpenFile(configuration.Config.TokensDir+"/"+username.Name(), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		defer f.Close()
+
+		// compose string
+		writeTokens := strings.Join(validTokens[:], "\n")
+
+		// write file with tokens
+		_, errWrite := f.WriteString(writeTokens + "\n")
+
+		// check error
+		if errWrite != nil {
+			logs.Logs.Println("[ERR][JWT] Failed to write new tokens file " + configuration.Config.TokensDir + "/" + username.Name() + ". Error: " + errWrite.Error())
+		}
+	}
+
 }
