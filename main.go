@@ -108,7 +108,7 @@ func main() {
 		}))
 	})
 
-	// run expired token cleanup, on starup
+	// run expired token cleanup, on startup
 	methods.DeleteExpiredTokens()
 
 	// create cron to run daily
