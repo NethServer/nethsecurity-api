@@ -390,7 +390,7 @@ func CheckTokenValidation(username string, token string) bool {
 	}
 	secrestList := string(secrestListB)
 
-	// check whether s contains substring text
+	// check whether secret list contains token
 	return strings.Contains(secrestList, token)
 }
 
