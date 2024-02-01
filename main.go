@@ -18,6 +18,7 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 
 	"github.com/NethServer/nethsecurity-api/configuration"
 	"github.com/NethServer/nethsecurity-api/logs"
@@ -106,6 +107,14 @@ func main() {
 			Data:    nil,
 		}))
 	})
+
+	// run expired token cleanup, on startup
+	methods.DeleteExpiredTokens()
+
+	// create cron to run daily
+	c := cron.New()
+	c.AddFunc("@daily", methods.DeleteExpiredTokens)
+	c.Start()
 
 	// run server
 	router.Run(configuration.Config.ListenAddress)
