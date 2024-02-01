@@ -565,7 +565,7 @@ func DeleteExpiredTokens() {
 		// get string file
 		tokensList := string(tokenstListB)
 
-		// convert in array
+		// convert to array
 		tokens := strings.Split(tokensList, "\n")
 
 		// remove empty elem
