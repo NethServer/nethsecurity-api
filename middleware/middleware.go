@@ -146,7 +146,10 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				// convert to map and flat it
 				var jsonDyn map[string]interface{}
 				json.Unmarshal(body, &jsonDyn)
-				in, _ := flat.Flatten(jsonDyn, nil)
+				in, _ := flat.Flatten(jsonDyn, &flat.Options{
+					Delimiter: ".",
+					Safe:      true,
+				})
 
 				// search for sensitve data, in sensitive list
 				for k, _ := range in {
