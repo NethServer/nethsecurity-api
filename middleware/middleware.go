@@ -11,15 +11,14 @@ package middleware
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
-	"github.com/nqd/flat"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 
@@ -143,31 +142,25 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				body, _ := ioutil.ReadAll(tee)
 				c.Request.Body = ioutil.NopCloser(&buf)
 
-				// convert to map and flat it
-				var jsonDyn map[string]interface{}
-				json.Unmarshal(body, &jsonDyn)
-				in, _ := flat.Flatten(jsonDyn, &flat.Options{
-					Delimiter: ".",
-					Safe:      true,
-				})
+				// get JSON string body
+				jsonB := string(body)
 
-				// search for sensitve data, in sensitive list
-				for k, _ := range in {
-					for _, s := range configuration.Config.SensitiveList {
-						if strings.Contains(strings.ToLower(k), strings.ToLower(s)) {
-							in[k] = "XXX"
-						}
-					}
+				// remove all spaces
+				jsonB = strings.ReplaceAll(jsonB, " ", "")
+
+				// create regex for sensitive words
+				for _, s := range configuration.Config.SensitiveList {
+					// create regex
+					r1 := regexp.MustCompile(`"` + s + `":"(.*?)"`) // match "token|password|secret":"<sensitive>"
+					r2 := regexp.MustCompile(`"` + s + `","(.*?)"`) // match "token|password|secret","<sensitive>"
+
+					// apply regex
+					jsonB = r1.ReplaceAllString(jsonB, `"`+s+`":"XXX"`)
+					jsonB = r2.ReplaceAllString(jsonB, `"`+s+`":"XXX"`)
 				}
 
-				// unflat the map
-				out, _ := flat.Unflatten(in, nil)
-
-				// convert to json string
-				jsonOut, _ := json.Marshal(out)
-
-				// compose string
-				reqBody = string(jsonOut)
+				// compose req body
+				reqBody = jsonB
 			}
 
 			logs.Logs.Println("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". " + reqMethod + " " + reqURI + " " + reqBody)
