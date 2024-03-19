@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Nethesis S.r.l.
+ * Copyright (C) 2024 Nethesis S.r.l.
  * http://www.nethesis.it - info@nethesis.it
  *
  * SPDX-License-Identifier: GPL-2.0-only
@@ -16,7 +16,6 @@ import (
 	"github.com/fatih/structs"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 
@@ -68,9 +67,6 @@ func main() {
 		router.Use(cors.New(corsConf))
 	}
 
-	// define static file endpoint
-	router.Use(static.Serve("/", static.LocalFile(configuration.Config.StaticDir, false)))
-
 	// define api group
 	api := router.Group("/api")
 
@@ -95,8 +91,10 @@ func main() {
 		api.DELETE("/2fa", methods.Del2FAStatus)
 		api.GET("/2fa/qr-code", methods.QRCode)
 
-		// upload
-		api.POST("/upload", methods.Upload)
+		// files handler
+		api.GET("/files/:filename", methods.DownloadFile)
+		api.POST("/files", methods.UploadFile)
+		api.DELETE("/files/:filename", methods.DeleteFile)
 	}
 
 	// handle missing endpoint

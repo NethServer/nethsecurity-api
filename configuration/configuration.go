@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Nethesis S.r.l.
+ * Copyright (C) 2024 Nethesis S.r.l.
  * http://www.nethesis.it - info@nethesis.it
  *
  * SPDX-License-Identifier: GPL-2.0-only
@@ -25,12 +25,11 @@ type Configuration struct {
 	SecretsDir string `json:"secrets_dir"`
 	TokensDir  string `json:"tokens_dir"`
 
-	StaticDir string `json:"static_dir"`
-
 	SensitiveList []string `json:"sensitive_list"`
 
 	UploadFileMaxSize int64  `json:"upload_file_max_size"`
 	UploadFilePath    string `json:"upload_file_path"`
+	DownloadFilePath  string `json:"download_file_path"`
 }
 
 var Config = Configuration{}
@@ -70,18 +69,17 @@ func Init() {
 		os.Exit(1)
 	}
 
-	if os.Getenv("STATIC_DIR") != "" {
-		Config.StaticDir = os.Getenv("STATIC_DIR")
-	} else {
-		Config.StaticDir = "/var/run/ns-api-server"
-	}
-
 	if os.Getenv("SENSITIVE_LIST") != "" {
 		Config.SensitiveList = strings.Split(os.Getenv("SENSITIVE_LIST"), ",")
 	} else {
 		Config.SensitiveList = []string{"password", "secret", "token"}
 	}
 
+	if os.Getenv("DOWNLOAD_FILE_PATH") != "" {
+		Config.DownloadFilePath = os.Getenv("DOWNLOAD_FILE_PATH")
+	} else {
+		Config.DownloadFilePath = "/var/run/ns-api-server/downloads"
+	}
 	if os.Getenv("UPLOAD_FILE_PATH") != "" {
 		Config.UploadFilePath = os.Getenv("UPLOAD_FILE_PATH")
 	} else {
