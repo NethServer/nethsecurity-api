@@ -193,3 +193,66 @@ Where:
        "message": "[UBUS] call action success"
      }
     ```
+  ### Files
+- `GET /api/files/<file_name>`
+
+    REQ
+    ```json
+     Content-Type: application/json
+     Authorization: Bearer <JWT_TOKEN>
+    ```
+
+    RES
+    ```json
+     HTTP/1.1 200 OK
+     Content-Type: application/octet-stream
+     Content-Length: <file_length>
+     Content-Description: File Transfer
+     Content-Disposition: attachment; filename=<file_name>
+     Content-Transfer-Encoding: binary
+
+     { [<file_length> bytes data] }
+    ```
+
+- `POST /api/files`
+
+  REQ
+  ```json
+    Content-Length: 258
+    Content-Type: multipart/form-data; boundary=------------------------c82dccb76d1cbe23
+    Authorization: Bearer <JWT_TOKEN>
+
+    file=@local_file
+  ```
+
+  RES
+  ```json
+    HTTP/1.1 200 OK
+    Content-Type: application/json; charset=utf-8
+
+    {
+      "code": 200,
+      "data": "upload-76cc70cc-8c71-40f5-b015-014c6061f7f4",
+      "message": "file upload success"
+    }
+
+  ```
+- `DELETE /api/files/<file_name>`
+
+    REQ
+    ```json
+    Content-Type: application/json
+    Authorization: Bearer <JWT_TOKEN>
+    ```
+
+    RES
+    ```json
+    HTTP/1.1 200 OK
+    Content-Type: application/json; charset=utf-8
+
+     {
+       "code": 200,
+       "data": false,
+       "message": "file remove success"
+     }
+    ```
