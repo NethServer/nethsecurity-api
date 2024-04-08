@@ -264,8 +264,7 @@ func Get2FAStatus(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
 
 	// get status
-	status, err := os.ReadFile(configuration.Config.SecretsDir + "/" + claims["id"].(string) + "/status")
-	statusS := strings.TrimSpace(string(status[:]))
+	statusS, err := GetUserStatus(claims["id"].(string))
 
 	// handle response
 	var message = "2FA set for this user"
@@ -338,6 +337,13 @@ func Del2FAStatus(c *gin.Context) {
 		Message: "2FA revocate successfully",
 		Data:    "",
 	}))
+}
+
+func GetUserStatus(username string) (string, error) {
+	status, err := os.ReadFile(configuration.Config.SecretsDir + "/" + username + "/status")
+	statusS := strings.TrimSpace(string(status[:]))
+
+	return statusS, err
 }
 
 func GetUserSecret(username string) string {

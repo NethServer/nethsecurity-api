@@ -87,14 +87,14 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// read current user
 			if user, ok := data.(*models.UserAuthorizations); ok {
 				// check if user require 2fa
-				var required = methods.GetUserSecret(user.Username) != ""
+				status, _ := methods.GetUserStatus(user.Username)
 
 				// create claims map
 				return jwt.MapClaims{
 					identityKey: user.Username,
 					"role":      "",
 					"actions":   []string{},
-					"2fa":       required,
+					"2fa":       status == "1",
 				}
 			}
 
