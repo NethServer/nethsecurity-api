@@ -39,7 +39,7 @@ func UBusCallAction(c *gin.Context) {
 	jsonPayload, _ := json.Marshal(jsonUBusCall.Payload)
 
 	// execute login command on ubus
-	out, err := exec.Command("/bin/ubus", "-S", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:])).Output()
+	out, err := exec.Command("/bin/ubus", "-S", "-t", "300", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:])).Output()
 
 	// check errors
 	if err != nil {
