@@ -162,6 +162,10 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				// compose req body
 				reqBody = jsonB
 			}
+			// if reqURI contains /files path, just replace the body with a static string to avoid logging the file content
+			if strings.Contains(reqURI, "/files") {
+				reqBody = "<file>"
+			}
 
 			logs.Logs.Println("[INFO][AUTH] authorization success for user " + claims["id"].(string) + ". " + reqMethod + " " + reqURI + " " + reqBody)
 
