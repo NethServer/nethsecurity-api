@@ -135,7 +135,11 @@ func InitJWT() *jwt.GinJWTMiddleware {
 
 			// extract body
 			reqBody := ""
-			if reqMethod == "POST" || reqMethod == "PUT" {
+			// if reqURI contains /files path, just replace the body with a static string to avoid logging the file content
+			if strings.Contains(reqURI, "/files") {
+				reqBody = "<file>"
+			}
+			if reqBody != "<file>" && (reqMethod == "POST" || reqMethod == "PUT") {
 				// extract body
 				var buf bytes.Buffer
 				tee := io.TeeReader(c.Request.Body, &buf)
