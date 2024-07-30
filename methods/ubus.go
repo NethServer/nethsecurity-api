@@ -33,7 +33,7 @@ import (
 var validPaths []string
 
 func LoadValidPaths() {
-	validPaths = make([]string, 0)
+	paths := make([]string, 0)
 	files, err := os.ReadDir("/usr/libexec/rpcd")
 	if err != nil {
 		return
@@ -44,10 +44,12 @@ func LoadValidPaths() {
 			// execute opkg search path, if output is empty, the file does not belong to any package: don't add to valid paths
 			out, err := exec.Command("/bin/opkg", "search", path).Output()
 			if out != nil && err == nil {
-				validPaths = append(validPaths, path)
+				paths = append(paths, path)
 			}
 		}
 	}
+	// update valid paths only as last thing to avoid having an empty list during reload
+	validPaths = paths
 }
 
 func UBusCallAction(c *gin.Context) {
