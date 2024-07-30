@@ -10,7 +10,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/fatih/structs"
@@ -49,7 +49,7 @@ func main() {
 
 	// disable log to stdout when running in release mode
 	if gin.Mode() == gin.ReleaseMode {
-		gin.DefaultWriter = ioutil.Discard
+		gin.DefaultWriter = io.Discard
 	}
 
 	// init routers

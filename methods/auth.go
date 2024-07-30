@@ -390,7 +390,7 @@ func SetUserSecret(username string, secret string) (bool, string) {
 
 func CheckTokenValidation(username string, token string) bool {
 	// read whole file
-	secrestListB, err := ioutil.ReadFile(configuration.Config.TokensDir + "/" + username)
+	secrestListB, err := os.ReadFile(configuration.Config.TokensDir + "/" + username)
 	if err != nil {
 		return false
 	}
