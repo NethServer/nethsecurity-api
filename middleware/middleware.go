@@ -12,7 +12,6 @@ package middleware
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
 	"time"
@@ -143,8 +142,8 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				// extract body
 				var buf bytes.Buffer
 				tee := io.TeeReader(c.Request.Body, &buf)
-				body, _ := ioutil.ReadAll(tee)
-				c.Request.Body = ioutil.NopCloser(&buf)
+				body, _ := io.ReadAll(tee)
+				c.Request.Body = io.NopCloser(&buf)
 
 				// get JSON string body
 				jsonB := string(body)
