@@ -10,7 +10,6 @@
 package methods
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/json"
@@ -36,8 +35,6 @@ import (
 	"github.com/NethServer/nethsecurity-api/response"
 	"github.com/NethServer/nethsecurity-api/utils"
 )
-
-var ctx = context.Background()
 
 func CheckAuthentication(username string, password string) error {
 	// define login object
@@ -146,7 +143,7 @@ func OTPVerify(c *gin.Context) {
 	}
 
 	// check if 2FA was disabled
-	status, err := os.ReadFile(configuration.Config.SecretsDir + "/" + jsonOTP.Username + "/status")
+	status, _ := os.ReadFile(configuration.Config.SecretsDir + "/" + jsonOTP.Username + "/status")
 	statusOld := strings.TrimSpace(string(status[:]))
 
 	// then clean all previous tokens
@@ -390,7 +387,7 @@ func SetUserSecret(username string, secret string) (bool, string) {
 
 func CheckTokenValidation(username string, token string) bool {
 	// read whole file
-	secrestListB, err := ioutil.ReadFile(configuration.Config.TokensDir + "/" + username)
+	secrestListB, err := os.ReadFile(configuration.Config.TokensDir + "/" + username)
 	if err != nil {
 		return false
 	}
@@ -409,11 +406,7 @@ func SetTokenValidation(username string, token string) bool {
 	_, err := f.WriteString(token + "\n")
 
 	// check error
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func DelTokenValidation(username string, token string) bool {
@@ -435,12 +428,7 @@ func DelTokenValidation(username string, token string) bool {
 	_, err := f.WriteString(strings.TrimSpace(res) + "\n")
 
 	// check error
-	if err != nil {
-		return false
-	}
-
-	return true
-
+	return err == nil
 }
 
 func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
@@ -449,7 +437,7 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 		token, err := jwtl.Parse(tokenString, func(token *jwtl.Token) (interface{}, error) {
 			// validate the alg
 			if _, ok := token.Method.(*jwtl.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
 			// return secret
@@ -467,14 +455,14 @@ func ValidateAuth(tokenString string, ensureTokenExists bool) bool {
 					username := claims["id"].(string)
 
 					if !CheckTokenValidation(username, tokenString) {
-						logs.Logs.Println("[ERR][JWT] error JWT token not found: " + err.Error())
+						logs.Logs.Println("[ERR][JWT] error JWT token not found")
 						return false
 					}
 				}
 				return true
 			}
 		} else {
-			logs.Logs.Println("[ERR][JWT] error in JWT token claims: " + err.Error())
+			logs.Logs.Println("[ERR][JWT] error in JWT token claims")
 			return false
 		}
 	}
@@ -539,11 +527,7 @@ func UpdateRecoveryCodes(username string, codes []string) bool {
 	_, err := f.WriteString(strings.Join(codes[:], "\n"))
 
 	// check error
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func DeleteExpiredTokens() {

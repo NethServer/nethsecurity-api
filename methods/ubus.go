@@ -11,11 +11,15 @@ package methods
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/NethServer/nethsecurity-api/models"
 	"github.com/NethServer/nethsecurity-api/response"
+	"github.com/NethServer/nethsecurity-api/utils"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/fatih/structs"
@@ -23,9 +27,33 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+// List, to check if path is allowed:
+// this is a security measure to avoid direct calls to binaries
+// that are not part of any package
+var validPaths []string
+
+func LoadValidPaths() {
+	validPaths = make([]string, 0)
+	files, err := os.ReadDir("/usr/libexec/rpcd")
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), "ns.") {
+			path := "/usr/libexec/rpcd/" + file.Name()
+			// execute opkg search path, if output is empty, the file does not belong to any package: don't add to valid paths
+			out, err := exec.Command("/bin/opkg", "search", path).Output()
+			if out != nil && err == nil {
+				validPaths = append(validPaths, path)
+			}
+		}
+	}
+}
+
 func UBusCallAction(c *gin.Context) {
 	// parse request fields
 	var jsonUBusCall models.UBusCallJSON
+	var cmd *exec.Cmd
 	if err := c.ShouldBindBodyWith(&jsonUBusCall, binding.JSON); err != nil {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
@@ -38,10 +66,42 @@ func UBusCallAction(c *gin.Context) {
 	// convert payload to JSON
 	jsonPayload, _ := json.Marshal(jsonUBusCall.Payload)
 
-	// execute login command on ubus
-	out, err := exec.Command("/bin/ubus", "-S", "-t", "300", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:])).Output()
+	// check if path starts with ns.
+	if jsonUBusCall.Path[:3] == "ns." {
+		// force base path to avoid calling other system binaries
+		jsonUBusCall.Path = "/usr/libexec/rpcd/" + jsonUBusCall.Path
+		// check if path is inside valid paths list
+		if !utils.Contains(jsonUBusCall.Path, validPaths) {
+			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+				Code:    400,
+				Message: "invalid path",
+				Data:    jsonUBusCall.Path,
+			}))
+			return
+		}
+
+		cmd = exec.Command(jsonUBusCall.Path, "call", jsonUBusCall.Method)
+
+		// execute direct script call
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
+				Code:    500,
+				Message: "ubus call action failed",
+				Data:    err.Error(),
+			}))
+			return
+		}
+
+		io.WriteString(stdin, string(jsonPayload))
+		stdin.Close()
+	} else {
+		// fallback to rpcd
+		cmd = exec.Command("/bin/ubus", "-S", "-t", "300", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:]))
+	}
 
 	// check errors
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 			Code:    500,
@@ -52,7 +112,15 @@ func UBusCallAction(c *gin.Context) {
 	}
 
 	// parse output in a valid JSON
-	jsonParsed, _ := gabs.ParseJSON(out)
+	jsonParsed, err := gabs.ParseJSON(out)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
+			Code:    500,
+			Message: "invalid JSON response",
+			Data:    jsonParsed,
+		}))
+		return
+	}
 
 	// check errors in response
 	errorMessage, errFound := jsonParsed.Path("error").Data().(string)
@@ -60,7 +128,7 @@ func UBusCallAction(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 			Code:    500,
 			Message: errorMessage,
-			Data: jsonParsed,
+			Data:    jsonParsed,
 		}))
 		return
 	}
@@ -71,7 +139,7 @@ func UBusCallAction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
 			Code:    400,
 			Message: "validation_failed",
-			Data: jsonParsed,
+			Data:    jsonParsed,
 		}))
 		return
 	}

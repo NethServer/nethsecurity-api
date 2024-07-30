@@ -10,8 +10,11 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/fatih/structs"
 	"github.com/gin-contrib/cors"
@@ -47,9 +50,22 @@ func main() {
 	// init configuration
 	configuration.Init()
 
+	// load list of valid paths
+	methods.LoadValidPaths()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGUSR1)
+	go func() {
+		sig := <-sigs
+		if sig == syscall.SIGUSR1 {
+			logs.Logs.Println("Reloading valid path list")
+			methods.LoadValidPaths()
+		}
+	}()
+
 	// disable log to stdout when running in release mode
 	if gin.Mode() == gin.ReleaseMode {
-		gin.DefaultWriter = ioutil.Discard
+		gin.DefaultWriter = io.Discard
 	}
 
 	// init routers
