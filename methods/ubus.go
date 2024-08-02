@@ -114,15 +114,7 @@ func UBusCallAction(c *gin.Context) {
 	}
 
 	// parse output in a valid JSON
-	jsonParsed, err := gabs.ParseJSON(out)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
-			Code:    500,
-			Message: "invalid JSON response",
-			Data:    jsonParsed,
-		}))
-		return
-	}
+	jsonParsed, _ := gabs.ParseJSON(out)
 
 	// check errors in response
 	errorMessage, errFound := jsonParsed.Path("error").Data().(string)
