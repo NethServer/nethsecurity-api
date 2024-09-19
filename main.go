@@ -53,7 +53,9 @@ func main() {
 	// load list of valid paths
 	methods.LoadValidPaths()
 
+	// prepare signal handling
 	sigs := make(chan os.Signal, 1)
+	wait_sigs := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGUSR1)
 	go func() {
 		sig := <-sigs
@@ -132,4 +134,7 @@ func main() {
 
 	// run server
 	router.Run(configuration.Config.ListenAddress)
+
+	// wait for signals: this is blocking and must be called after router.Run
+	<-wait_sigs
 }
