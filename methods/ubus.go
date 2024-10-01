@@ -13,44 +13,16 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/NethServer/nethsecurity-api/models"
 	"github.com/NethServer/nethsecurity-api/response"
-	"github.com/NethServer/nethsecurity-api/utils"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
-
-// List, to check if path is allowed:
-// this is a security measure to avoid direct calls to binaries
-// that are not part of any package
-var validPaths []string
-
-func LoadValidPaths() {
-	paths := make([]string, 0)
-	files, err := os.ReadDir("/usr/libexec/rpcd")
-	if err != nil {
-		return
-	}
-	for _, file := range files {
-		if strings.HasPrefix(file.Name(), "ns.") {
-			path := "/usr/libexec/rpcd/" + file.Name()
-			// execute opkg search path, if output is empty, the file does not belong to any package: don't add to valid paths
-			out, err := exec.Command("/bin/opkg", "search", path).Output()
-			if out != nil && err == nil {
-				paths = append(paths, path)
-			}
-		}
-	}
-	// update valid paths only as last thing to avoid having an empty list during reload
-	validPaths = paths
-}
 
 func UBusCallAction(c *gin.Context) {
 	// parse request fields
@@ -72,16 +44,6 @@ func UBusCallAction(c *gin.Context) {
 	if jsonUBusCall.Path[:3] == "ns." {
 		// force base path to avoid calling other system binaries
 		jsonUBusCall.Path = "/usr/libexec/rpcd/" + jsonUBusCall.Path
-		// check if path is inside valid paths list
-		if !utils.Contains(jsonUBusCall.Path, validPaths) {
-			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
-				Code:    400,
-				Message: "invalid path",
-				Data:    jsonUBusCall.Path,
-			}))
-			return
-		}
-
 		cmd = exec.Command(jsonUBusCall.Path, "call", jsonUBusCall.Method)
 
 		// execute direct script call
