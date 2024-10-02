@@ -66,15 +66,15 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// check login
 			err := methods.CheckAuthentication(username, password)
 			if err != nil {
-				// login fail action
-				logs.Logs.Println("[INFO][AUTH] authentication failed for user " + username + ": " + err.Error())
+				// login failed, write also the IP address of the client
+				logs.Logs.Println("[INFO][AUTH] authentication failed for user " + username + " from " + c.ClientIP() + ": " + err.Error())
 
 				// return JWT error
 				return nil, jwt.ErrFailedAuthentication
 			}
 
 			// login ok action
-			logs.Logs.Println("[INFO][AUTH] authentication success for user " + username)
+			logs.Logs.Println("[INFO][AUTH] authentication success for user " + username + " from " + c.ClientIP())
 
 			// return user auth model
 			return &models.UserAuthorizations{
