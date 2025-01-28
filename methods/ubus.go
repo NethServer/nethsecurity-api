@@ -60,6 +60,30 @@ func UBusCallAction(c *gin.Context) {
 		io.WriteString(stdin, string(jsonPayload))
 		stdin.Close()
 	} else {
+		// check if path is authorized
+		var authorizedPaths = map[string][]string{
+			"uci":    {"get", "set", "changes", "revert"},
+			"luci":   {"getTimezones", "setInitAction"},
+			"system": {"info", "board"},
+		}
+		var forbidden = true
+		if authorizedPaths[jsonUBusCall.Path] != nil {
+			for _, method := range authorizedPaths[jsonUBusCall.Path] {
+				if method == jsonUBusCall.Method {
+					forbidden = false
+					break
+				}
+			}
+		}
+		if forbidden {
+			c.AbortWithStatusJSON(http.StatusForbidden, structs.Map(response.StatusBadRequest{
+				Code:    403,
+				Message: "ubus call action forbidden",
+				Data:    "method not allowed",
+			}))
+			return
+		}
+
 		// fallback to rpcd
 		cmd = exec.Command("/bin/ubus", "-S", "-t", "300", "call", jsonUBusCall.Path, jsonUBusCall.Method, string(jsonPayload[:]))
 	}
