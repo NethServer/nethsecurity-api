@@ -24,6 +24,7 @@ import (
 	"github.com/NethServer/nethsecurity-api/methods"
 	"github.com/NethServer/nethsecurity-api/middleware"
 	"github.com/NethServer/nethsecurity-api/response"
+	"github.com/NethServer/nethsecurity-api/sudo"
 )
 
 // @title NethSecurity StandAlone API Server
@@ -72,30 +73,31 @@ func main() {
 
 	// define login and logout endpoint
 	api.POST("/login", middleware.InstanceJWT().LoginHandler)
-	api.POST("/logout", middleware.InstanceJWT().LogoutHandler)
 
 	// 2FA APIs
 	api.POST("/2fa/otp-verify", methods.OTPVerify)
 
 	// define JWT middleware
-	api.Use(middleware.InstanceJWT().MiddlewareFunc())
-	{
-		// refresh handler
-		api.GET("/refresh", middleware.InstanceJWT().RefreshHandler)
+	authGroup := api.Group("/", middleware.InstanceJWT().MiddlewareFunc())
 
-		// ubus wrapper
-		api.POST("/ubus/call", methods.UBusCallAction)
+	// logout
+	authGroup.POST("/logout", middleware.InstanceJWT().LogoutHandler)
+	// allow user to request sudo mode
+	authGroup.POST("/sudo", sudo.EnableSudo)
+	// refresh handler
+	authGroup.GET("/refresh", middleware.InstanceJWT().RefreshHandler)
 
-		// 2FA APIs
-		api.GET("/2fa", methods.Get2FAStatus)
-		api.DELETE("/2fa", methods.Del2FAStatus)
-		api.GET("/2fa/qr-code", methods.QRCode)
+	// 2FA APIs
+	authGroup.GET("/2fa", methods.Get2FAStatus)
+	authGroup.DELETE("/2fa", methods.Del2FAStatus)
+	authGroup.GET("/2fa/qr-code", methods.QRCode)
 
-		// files handler
-		api.GET("/files/:filename", methods.DownloadFile)
-		api.POST("/files", methods.UploadFile)
-		api.DELETE("/files/:filename", methods.DeleteFile)
-	}
+	// files handler
+	authGroup.GET("/files/:filename", methods.DownloadFile)
+	authGroup.POST("/files", methods.UploadFile)
+	authGroup.DELETE("/files/:filename", methods.DeleteFile)
+
+	authGroup.POST("/ubus/call", middleware.SudoUbusCallsMiddleware(), methods.UBusCallAction)
 
 	// handle missing endpoint
 	router.NoRoute(func(c *gin.Context) {

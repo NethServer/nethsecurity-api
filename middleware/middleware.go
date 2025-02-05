@@ -88,7 +88,16 @@ func InitJWT() *jwt.GinJWTMiddleware {
 				// check if user require 2fa
 				status, _ := methods.GetUserStatus(user.Username)
 
-				// create claims map
+				if user.SudoRequested {
+					// create claims map
+					return jwt.MapClaims{
+						identityKey: user.Username,
+						"role":      "",
+						"actions":   []string{},
+						"2fa":       status == "1",
+						"sudo":      time.Now().Unix(),
+					}
+				}
 				return jwt.MapClaims{
 					identityKey: user.Username,
 					"role":      "",
