@@ -10,6 +10,7 @@
 package utils
 
 import (
+	"math/rand"
 	"strconv"
 	"time"
 )
@@ -39,4 +40,28 @@ func EpochToHumanDate(epochTime int) string {
 	}
 	tm := time.Unix(i, 0)
 	return tm.Format("2006-01-02 15:04:05")
+}
+
+var digitTable = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+
+func RandomDigitString(max int) string {
+	b := make([]byte, max)
+	for i := range b {
+		b[i] = digitTable[rand.Intn(10)]
+	}
+	return string(b)
+}
+
+type ValidationEntry struct {
+	Message   string `json:"message" structs:"message"`
+	Value     string `json:"value" structs:"value"`
+	Parameter string `json:"parameter" structs:"parameter"`
+}
+
+type ValidationBag struct {
+	Errors []ValidationEntry `json:"errors" structs:"errors"`
+}
+
+type ValidationResponse struct {
+	Validation ValidationBag `json:"validation" structs:"validation"`
 }

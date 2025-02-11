@@ -73,15 +73,11 @@ func main() {
 
 	// define login and logout endpoint
 	api.POST("/login", middleware.InstanceJWT().LoginHandler)
-
-	// 2FA APIs
-	api.POST("/2fa/otp-verify", methods.OTPVerify)
+	api.POST("/logout", middleware.InstanceJWT().LogoutHandler)
 
 	// define JWT middleware
 	authGroup := api.Group("/", middleware.InstanceJWT().MiddlewareFunc())
 
-	// logout
-	authGroup.POST("/logout", middleware.InstanceJWT().LogoutHandler)
 	// allow user to request sudo mode
 	authGroup.POST("/sudo", sudo.EnableSudo)
 	// refresh handler
@@ -89,14 +85,18 @@ func main() {
 
 	// 2FA APIs
 	authGroup.GET("/2fa", methods.Get2FAStatus)
-	authGroup.DELETE("/2fa", methods.Del2FAStatus)
-	authGroup.GET("/2fa/qr-code", methods.QRCode)
+	authGroup.GET("/2fa/qr-code", methods.Start2FaProcedure)
+
+	sudoMode := authGroup.Group("/", middleware.SudoModeMiddleware())
+	sudoMode.DELETE("/2fa", methods.Del2FAStatus)
+	sudoMode.POST("/2fa", methods.Enable2Fa)
 
 	// files handler
 	authGroup.GET("/files/:filename", methods.DownloadFile)
 	authGroup.POST("/files", methods.UploadFile)
 	authGroup.DELETE("/files/:filename", methods.DeleteFile)
 
+	// ubus calls
 	authGroup.POST("/ubus/call", middleware.SudoUbusCallsMiddleware(), methods.UBusCallAction)
 
 	// handle missing endpoint

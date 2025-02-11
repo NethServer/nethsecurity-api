@@ -31,3 +31,11 @@ type UserLogin struct {
 	Password string `json:"password" structs:"password"`
 	Timeout  int    `json:"timeout" structs:"timeout"`
 }
+
+type EnableTwoFa struct {
+	OTP string `json:"otp" structs:"otp"`
+}
+
+type DisableTwoFa struct {
+	OTP string `json:"otp" structs:"otp"`
+}

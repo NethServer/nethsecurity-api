@@ -11,7 +11,10 @@ package middleware
 
 import (
 	"bytes"
+	"errors"
+	"github.com/NethServer/nethsecurity-api/utils"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -31,6 +34,7 @@ import (
 type login struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
+	TwoFa    string `form:"two_fa" json:"two_fa"`
 }
 
 var jwtMiddleware *jwt.GinJWTMiddleware
@@ -64,10 +68,37 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			password := loginVals.Password
 
 			// check login
-			err := methods.CheckAuthentication(username, password)
+			err := methods.CheckAuthentication(username, password, loginVals.TwoFa)
 			if err != nil {
 				// login failed, write also the IP address of the client
 				logs.Logs.Println("[INFO][AUTH] authentication failed for user " + username + " from " + c.ClientIP() + ": " + err.Error())
+
+				var validationErrors []utils.ValidationEntry
+				if errors.Is(err, methods.ErrorCredentials) {
+					validationErrors = []utils.ValidationEntry{
+						{
+							Message:   err.Error(),
+							Parameter: "password",
+							Value:     "",
+						},
+					}
+				} else if errors.Is(err, methods.ErrorMissingOTP) || errors.Is(err, methods.ErrorInvalidOTP) {
+					validationErrors = []utils.ValidationEntry{
+						{
+							Message:   err.Error(),
+							Parameter: "two_fa",
+							Value:     "",
+						},
+					}
+				}
+
+				if validationErrors != nil {
+					c.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+						Code:    http.StatusBadRequest,
+						Message: "validation_error",
+						Data:    utils.ValidationResponse{Validation: utils.ValidationBag{Errors: validationErrors}},
+					}))
+				}
 
 				// return JWT error
 				return nil, jwt.ErrFailedAuthentication
@@ -86,7 +117,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			// read current user
 			if user, ok := data.(*models.UserAuthorizations); ok {
 				// check if user require 2fa
-				status, _ := methods.GetUserStatus(user.Username)
+				status, _ := methods.IsTwoFaEnabledForUser(user.Username)
 
 				if user.SudoRequested {
 					// create claims map
@@ -94,7 +125,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 						identityKey: user.Username,
 						"role":      "",
 						"actions":   []string{},
-						"2fa":       status == "1",
+						"2fa":       status,
 						"sudo":      time.Now().Unix(),
 					}
 				}
@@ -102,7 +133,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 					identityKey: user.Username,
 					"role":      "",
 					"actions":   []string{},
-					"2fa":       status == "1",
+					"2fa":       status,
 				}
 			}
 
@@ -185,10 +216,7 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			tokenObj, _ := InstanceJWT().ParseTokenString(token)
 			claims := jwt.ExtractClaimsFromToken(tokenObj)
 
-			// set token to valid, if not 2FA
-			if !claims["2fa"].(bool) {
-				methods.SetTokenValidation(claims["id"].(string), token)
-			}
+			methods.SetTokenValidation(claims["id"].(string), token)
 
 			// write logs
 			logs.Logs.Println("[INFO][AUTH] login response success for user " + claims["id"].(string))
@@ -225,16 +253,17 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			c.JSON(200, gin.H{"code": 200})
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
-			// write logs
-			logs.Logs.Println("[INFO][AUTH] unauthorized request: " + message)
-
-			// response not authorized
-			c.JSON(code, structs.Map(response.StatusUnauthorized{
-				Code:    code,
-				Message: message,
-				Data:    nil,
-			}))
-			return
+			// check if request is aborted, if it is, it's probably has been handled somewhere else
+			if !c.IsAborted() {
+				// response not authorized
+				logs.Logs.Println("[INFO][AUTH] unauthorized request: " + message)
+				c.AbortWithStatusJSON(code, structs.Map(response.StatusUnauthorized{
+					Code:    code,
+					Message: message,
+					Data:    nil,
+				}))
+				return
+			}
 		},
 		TokenLookup:   "header: Authorization, token: jwt",
 		TokenHeadName: "Bearer",
