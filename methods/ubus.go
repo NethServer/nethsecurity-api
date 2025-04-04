@@ -62,9 +62,10 @@ func UBusCallAction(c *gin.Context) {
 	} else {
 		// check if path is authorized
 		var authorizedPaths = map[string][]string{
-			"uci":    {"get", "set", "changes", "revert"},
-			"luci":   {"getTimezones", "setInitAction"},
-			"system": {"info", "board"},
+			"uci":               {"get", "set", "changes", "revert"},
+			"luci":              {"getTimezones", "setInitAction"},
+			"system":            {"info", "board"},
+			"network.interface": {"dump"},
 		}
 		var forbidden = true
 		if authorizedPaths[jsonUBusCall.Path] != nil {
