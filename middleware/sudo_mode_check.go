@@ -20,8 +20,8 @@ func SudoModeMiddleware() gin.HandlerFunc {
 func SudoCheckToken(c *gin.Context) {
 	// Get JWT claims
 	claims := jwt.ExtractClaims(c)
-	// Check if `sudo` was less than 10 minutes ago or `sudo` is not present
-	if claims["sudo"] == nil || time.Now().Unix()-int64(claims["sudo"].(float64)) > 600 {
+	// Check if `sudo` was less than 5 minutes ago or `sudo` is not present
+	if claims["sudo"] == nil || time.Now().Unix()-int64(claims["sudo"].(float64)) > 300 {
 		c.JSON(http.StatusForbidden, structs.Map(response.StatusForbidden{
 			Message: "sudo mode required",
 		}))
