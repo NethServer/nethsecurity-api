@@ -197,7 +197,6 @@ func OTPVerify(c *gin.Context) {
 	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
 		Code:    200,
 		Message: "OTP verified",
-		Data:    jsonOTP.Token,
 	}))
 }
 
@@ -261,28 +260,18 @@ func Get2FAStatus(c *gin.Context) {
 	claims := jwt.ExtractClaims(c)
 
 	// get status
-	statusS, err := GetUserStatus(claims["id"].(string))
-
-	// handle response
-	var message = "2FA set for this user"
-	var recoveryCodes []string
-
-	if !(statusS == "1") || err != nil {
-		message = "2FA not set for this user"
-		statusS = "0"
-	}
-
-	// get recovery codes
-	if statusS == "1" {
-		recoveryCodes = GetRecoveryCodes(claims["id"].(string))
-	}
+	twoFaStatus, _ := GetUserStatus(claims["id"].(string))
 
 	// return response
-	c.JSON(http.StatusOK, structs.Map(response.StatusOK{
-		Code:    200,
-		Message: message,
-		Data:    gin.H{"status": statusS == "1", "recovery_codes": recoveryCodes},
-	}))
+	c.JSON(http.StatusOK, gin.H{"status": twoFaStatus == "1"})
+}
+
+func Get2FARecoveryCodes(c *gin.Context) {
+	claims := jwt.ExtractClaims(c)
+
+	codes := GetRecoveryCodes(claims["id"].(string))
+
+	c.JSON(http.StatusOK, gin.H{"codes": codes})
 }
 
 func Del2FAStatus(c *gin.Context) {

@@ -90,8 +90,9 @@ func main() {
 
 	// 2FA APIs
 	authGroup.GET("/2fa", methods.Get2FAStatus)
-	authGroup.DELETE("/2fa", methods.Del2FAStatus)
-	authGroup.GET("/2fa/qr-code", methods.QRCode)
+	authGroup.DELETE("/2fa", middleware.SudoModeMiddleware(), methods.Del2FAStatus)
+	authGroup.GET("/2fa/recovery-codes", middleware.SudoModeMiddleware(), methods.Get2FARecoveryCodes)
+	authGroup.GET("/2fa/qr-code", middleware.SudoModeMiddleware(), methods.QRCode)
 
 	// files handler
 	authGroup.GET("/files/:filename", methods.DownloadFile)
