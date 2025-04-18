@@ -10,6 +10,7 @@
 package main
 
 import (
+	"github.com/NethServer/nethsecurity-api/sudo"
 	"io"
 	"net/http"
 
@@ -78,24 +79,25 @@ func main() {
 	api.POST("/2fa/otp-verify", methods.OTPVerify)
 
 	// define JWT middleware
-	api.Use(middleware.InstanceJWT().MiddlewareFunc())
-	{
-		// refresh handler
-		api.GET("/refresh", middleware.InstanceJWT().RefreshHandler)
+	authGroup := api.Group("/", middleware.InstanceJWT().MiddlewareFunc())
+	// allow user to request sudo mode
+	authGroup.POST("/sudo", sudo.EnableSudo)
+	// refresh handler
+	authGroup.GET("/refresh", middleware.InstanceJWT().RefreshHandler)
 
-		// ubus wrapper
-		api.POST("/ubus/call", methods.UBusCallAction)
+	// ubus wrapper
+	authGroup.POST("/ubus/call", middleware.SudoUbusCallsMiddleware(), methods.UBusCallAction)
 
-		// 2FA APIs
-		api.GET("/2fa", methods.Get2FAStatus)
-		api.DELETE("/2fa", methods.Del2FAStatus)
-		api.GET("/2fa/qr-code", methods.QRCode)
+	// 2FA APIs
+	authGroup.GET("/2fa", methods.Get2FAStatus)
+	authGroup.DELETE("/2fa", middleware.SudoModeMiddleware(), methods.Del2FAStatus)
+	authGroup.GET("/2fa/recovery-codes", middleware.SudoModeMiddleware(), methods.Get2FARecoveryCodes)
+	authGroup.GET("/2fa/qr-code", middleware.SudoModeMiddleware(), methods.QRCode)
 
-		// files handler
-		api.GET("/files/:filename", methods.DownloadFile)
-		api.POST("/files", methods.UploadFile)
-		api.DELETE("/files/:filename", methods.DeleteFile)
-	}
+	// files handler
+	authGroup.GET("/files/:filename", methods.DownloadFile)
+	authGroup.POST("/files", methods.UploadFile)
+	authGroup.DELETE("/files/:filename", methods.DeleteFile)
 
 	// handle missing endpoint
 	router.NoRoute(func(c *gin.Context) {

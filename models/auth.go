@@ -10,9 +10,10 @@
 package models
 
 type UserAuthorizations struct {
-	Username string   `json:"username" structs:"username"`
-	Role     string   `json:"role" structs:"role"`
-	Actions  []string `json:"actions" structs:"actions"`
+	Username      string   `json:"username" structs:"username"`
+	Role          string   `json:"role" structs:"role"`
+	Actions       []string `json:"actions" structs:"actions"`
+	SudoRequested bool     `json:"sudo_requested" structs:"sudo_requested"`
 }
 
 type OTPJson struct {
