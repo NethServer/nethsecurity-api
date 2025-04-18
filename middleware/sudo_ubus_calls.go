@@ -1,3 +1,8 @@
+/*
+Copyright (C) 2025 Nethesis S.r.l.
+SPDX-License-Identifier: GPL-2.0-only
+*/
+
 package middleware
 
 import (
@@ -7,8 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"net/http"
+	"regexp"
 )
 
+// protectedPaths is a map of ubus paths, and their methods that require sudo privileges
+// keys can be regex patterns
 var protectedPaths = map[string][]string{
 	"ns.ssh": {"add-key", "delete-key"},
 }
@@ -31,7 +39,8 @@ func SudoUbusCallsMiddleware() gin.HandlerFunc {
 		sudoRequired := false
 		if protectedPaths[jsonUBusCall.Path] != nil {
 			for _, method := range protectedPaths[jsonUBusCall.Path] {
-				if method == jsonUBusCall.Method {
+				var methodRegex = regexp.MustCompile(method)
+				if methodRegex.MatchString(jsonUBusCall.Method) {
 					sudoRequired = true
 					break
 				}

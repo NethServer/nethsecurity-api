@@ -1,3 +1,8 @@
+/*
+Copyright (C) 2025 Nethesis S.r.l.
+SPDX-License-Identifier: GPL-2.0-only
+*/
+
 package middleware
 
 import (
@@ -16,7 +21,7 @@ func SudoModeMiddleware() gin.HandlerFunc {
 	}
 }
 
-// SudoCheckToken checks if the `sudo` claim is present and less than 10 minutes ago
+// SudoCheckToken checks if the `sudo` claim is present and less than 5 minutes ago
 func SudoCheckToken(c *gin.Context) {
 	// Get JWT claims
 	claims := jwt.ExtractClaims(c)
@@ -26,6 +31,7 @@ func SudoCheckToken(c *gin.Context) {
 			Message: "sudo mode required",
 		}))
 		c.Abort()
+		return
 	}
 	// Else, continue
 	c.Next()
