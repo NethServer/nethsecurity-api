@@ -292,12 +292,15 @@ func Del2FAStatus(c *gin.Context) {
 	// revocate recovery codes
 	errRevocateCodes := os.Remove(configuration.Config.SecretsDir + "/" + claims["id"].(string) + "/codes")
 	if errRevocateCodes != nil {
-		c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
-			Code:    403,
-			Message: "error in delete 2FA recovery codes",
-			Data:    nil,
-		}))
-		return
+		// if the file does not exist, it is ok, skip the error
+		if !os.IsNotExist(errRevocateCodes) {
+			c.JSON(http.StatusBadRequest, structs.Map(response.StatusBadRequest{
+				Code:    403,
+				Message: "error in delete 2FA recovery codes",
+				Data:    nil,
+			}))
+			return
+		}
 	}
 
 	// set 2FA to disabled
