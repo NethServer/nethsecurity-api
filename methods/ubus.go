@@ -97,6 +97,7 @@ func UBusCallAction(c *gin.Context) {
 	if err != nil {
 		// log full response for debugging if ubus call fails
 		logs.Logs.Println("[ERROR][UBUS][PROCESS] ubus execution error:", err.Error())
+		logs.Logs.Println("[ERROR][UBUS][OUTPUT] ubus execution output:", string(out))
 		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 			Code:    500,
 			Message: "ubus call action failed",
