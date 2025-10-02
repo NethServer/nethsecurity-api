@@ -14,10 +14,11 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"fmt"
 
 	"github.com/NethServer/nethsecurity-api/models"
 	"github.com/NethServer/nethsecurity-api/response"
-
+	"github.com/NethServer/nethsecurity-api/logs"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/fatih/structs"
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,8 @@ func UBusCallAction(c *gin.Context) {
 		// execute direct script call
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
+			// log full response for debugging if ubus call fails
+			logs.Logs.Println("[ERROR][UBUS][STDIN] ubus stdin pipe error:", err.Error())
 			c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 				Code:    500,
 				Message: "ubus call action failed",
@@ -92,6 +95,9 @@ func UBusCallAction(c *gin.Context) {
 	// check errors
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		// log full response for debugging if ubus call fails
+		logs.Logs.Println("[ERROR][UBUS][PROCESS] ubus execution error:", err.Error())
+		logs.Logs.Println("[ERROR][UBUS][OUTPUT] ubus execution output:", string(out))
 		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 			Code:    500,
 			Message: "ubus call action failed",
@@ -106,6 +112,12 @@ func UBusCallAction(c *gin.Context) {
 	// check errors in response
 	errorMessage, errFound := jsonParsed.Path("error").Data().(string)
 	if errFound {
+		// log full response for debugging if we find {"error": ...} in response
+		logs.Logs.Println(fmt.Sprintf(
+			"[ERROR][UBUS][RESPONSE] ubus application error: Message='%s', Data='%s'",
+			errorMessage,
+			jsonParsed.String(),
+		))
 		c.JSON(http.StatusInternalServerError, structs.Map(response.StatusBadRequest{
 			Code:    500,
 			Message: errorMessage,
