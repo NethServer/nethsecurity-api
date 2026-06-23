@@ -185,13 +185,16 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			tokenObj, _ := InstanceJWT().ParseTokenString(token)
 			claims := jwt.ExtractClaimsFromToken(tokenObj)
 
+			id, _ := claims["id"].(string)
+			is2fa, _ := claims["2fa"].(bool)
+
 			// set token to valid, if not 2FA
-			if !claims["2fa"].(bool) {
-				methods.SetTokenValidation(claims["id"].(string), token)
+			if !is2fa {
+				methods.SetTokenValidation(id, token)
 			}
 
 			// write logs
-			logs.Logs.Println("[INFO][AUTH] login response success for user " + claims["id"].(string))
+			logs.Logs.Println("[INFO][AUTH] login response success for user " + id)
 
 			// return 200 OK
 			c.JSON(200, gin.H{"code": 200, "expire": t, "token": token})
@@ -201,25 +204,32 @@ func InitJWT() *jwt.GinJWTMiddleware {
 			tokenObj, _ := InstanceJWT().ParseTokenString(token)
 			claims := jwt.ExtractClaimsFromToken(tokenObj)
 
+			id, _ := claims["id"].(string)
+
 			// set token to valid
-			methods.SetTokenValidation(claims["id"].(string), token)
+			methods.SetTokenValidation(id, token)
 
 			// write logs
-			logs.Logs.Println("[INFO][AUTH] refresh response success for user " + claims["id"].(string))
+			logs.Logs.Println("[INFO][AUTH] refresh response success for user " + id)
 
 			// return 200 OK
 			c.JSON(200, gin.H{"code": 200, "expire": t, "token": token})
 		},
 		LogoutResponse: func(c *gin.Context, code int) {
-			//get claims
-			tokenObj, _ := InstanceJWT().ParseToken(c)
-			claims := jwt.ExtractClaimsFromToken(tokenObj)
+			//get claims, token may be invalid/expired (stale browser)
+			tokenObj, errToken := InstanceJWT().ParseToken(c)
+			if errToken == nil && tokenObj != nil {
+				claims := jwt.ExtractClaimsFromToken(tokenObj)
 
-			// set token to invalid
-			methods.DelTokenValidation(claims["id"].(string), tokenObj.Raw)
+				// only invalidate when claims carry a valid string id
+				if id, ok := claims["id"].(string); ok {
+					// set token to invalid
+					methods.DelTokenValidation(id, tokenObj.Raw)
 
-			// write logs
-			logs.Logs.Println("[INFO][AUTH] logout response success for user " + claims["id"].(string))
+					// write logs
+					logs.Logs.Println("[INFO][AUTH] logout response success for user " + id)
+				}
+			}
 
 			// reutrn 200 OK
 			c.JSON(200, gin.H{"code": 200})
