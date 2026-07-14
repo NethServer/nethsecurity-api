@@ -1,5 +1,10 @@
 # nethsecurity-api
 
+> **Archived.** This repo's code has been merged into
+> [NethServer/nethsecurity](https://github.com/NethServer/nethsecurity), under
+> [`packages/ns-api-server/files/src`](https://github.com/NethServer/nethsecurity/tree/main/packages/ns-api-server/files/src).
+> Open issues/PRs and future development happen there.
+
 ## Build
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
